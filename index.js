@@ -68,8 +68,8 @@ app.use('/graphql', graphqlHTTP({
                         throw err;
                     })
         },
-        createEvent: (args) => {
-            const event = new Event({
+        createEvent: (args) => { 
+            const event = new Event({      // this event is our database collection name
                 title: args.evenInput.title,
                 description: args.evenInput.description,
                 price: +args.evenInput.price,
