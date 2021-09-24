@@ -3,12 +3,16 @@ const bodyParser = require('body-parser');
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 const mongoose = require('mongoose');
-
-const Event = require('./models/event')
+const bcrypt = require('bcryptjs');
 
 require('dotenv').config()
 const app = express();
 app.use(bodyParser.json());
+
+
+// All mongoose Modules
+const Event = require('./models/event');
+const User = require('./models/user');
 
 
 /************************ Mongoose uri credential *************************/
@@ -35,6 +39,16 @@ app.use('/graphql', graphqlHTTP({
             price: Float!
             date: String!
         }
+        type User {
+            _id: ID
+            email: String!
+            password: String
+        }
+
+        input UserInput {
+            email: String!
+            password: String!
+        }
 
         input EventInput {
             title: String!
@@ -49,6 +63,7 @@ app.use('/graphql', graphqlHTTP({
 
         type RootMutation {
             createEvent(evenInput: EventInput): Event
+            createUser(userInput: UserInput): User
         }
 
         schema {
@@ -75,6 +90,7 @@ app.use('/graphql', graphqlHTTP({
                 price: +args.evenInput.price,
                 date: new Date(args.evenInput.date)
             });
+            // save event info on database
             return event.save()
                 .then(result => {
                     console.log(result);
@@ -84,6 +100,31 @@ app.use('/graphql', graphqlHTTP({
                     throw err;
                 });
             
+        },
+
+        createUser: (args) => {
+            return User.findOne({email: args.userInput.email}) // find out already added email on our database
+                .then( user => {
+                    if (user) {
+                        throw Error('User exits already.');
+                    }
+                    return bcrypt
+                     .hash(args.userInput.password, 12) // store password by crypts
+                })
+                .then(hashedPassword => {
+                    const user = new User({
+                        email: args.userInput.email,
+                        password: hashedPassword
+                    });
+                    // save user info on database
+                    return user.save();
+                })
+                .then(result => {
+                    return {...result._doc, password: null}
+                })
+                .catch(err => {
+                    throw err
+                });
         },
     },
     graphiql: true
