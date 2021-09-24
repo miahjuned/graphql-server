@@ -3,41 +3,41 @@ const bodyParser = require('body-parser');
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 
-const app = express(); 
-
+const app = express();
 app.use(bodyParser.json());
 
-
-let schema = buildSchema(`
-    type Query {
-        hello: String
-        juned: String
-    },
-`);
-
-
-let root ={
-    hello: () => {
-        return 'Hello this is test juned';
-    },
-    juned: () => {
-        return 'Juned';
-    },
-};
-
+// Graphql start 
 app.use('/graphql', graphqlHTTP({
-    schema: schema,
-    rootValue: root,
-    graphiql:true,
-}));
+   
+    schema: buildSchema(`
+        type RootQuery {
+            events: [String!]! 
+        }
 
+        type RootMutation {
+            createEvent(name: String): String
+        }
 
-
-
+        schema {
+            query: RootQuery
+            mutation: RootMutation
+        }
+    `),
+    rootValue: {
+        events: () => {
+            return ['test', 'again tester juned', 'first graphql', '2021']
+        },
+        createEvent: (args) => {
+            const eventName = args.name;
+            return eventName;
+        },
+    },
+    graphiql: true
+}))
 
 
 app.get('/', (req, res, next) => {
-    res.send("welcome backend juned");
+    res.send("welcome backend again juned");
 })
 
 const port = process.env.PORT || 5000
